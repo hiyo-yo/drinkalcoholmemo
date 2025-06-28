@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>飲酒管理アプリ - 記録一覧</title>
+</head>
+<body>
+    <h1>飲酒管理アプリ</h1>
+    <a href="/add">新規記録を追加</a>
+    <ul>
+        {% for drink in drinks %}
+        <li>{{ drink.date }} - {{ drink.name }} ({{ drink.volume }}ml, {{ drink.alcohol }}%)</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
