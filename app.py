@@ -11,6 +11,24 @@ from collections import defaultdict
 from itertools import zip_longest
 from dotenv import load_dotenv
 
+def migrate_db():
+    conn = sqlite3.conntect('dirnk_history.db')
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE drink_history ADD COLUMN pure_alcohol REAL;")
+        conn.commit()
+        print("✅ pure_alcohol column added to drink_history.db")
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" in str(e) or "already exists " in str(e):
+            print("✅ pure_alcohol column already exists, skipping migration.")
+        else:
+            print(f"⚠️ Migration error: {e}")
+    finally:
+        conn.close()
+
+# 必ずアプリ定義前に実行
+migrate_db()
+
 def init_db():
     conn = sqlite3.connect('drink_history.db')
     c = conn.cursor()
