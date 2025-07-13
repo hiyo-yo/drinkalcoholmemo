@@ -12,7 +12,7 @@ from itertools import zip_longest
 from dotenv import load_dotenv
 
 def migrate_db():
-    conn = sqlite3.conntect('dirnk_history.db')
+    conn = sqlite3.connect('dirnk_history.db')
     c = conn.cursor()
     try:
         c.execute("ALTER TABLE drink_history ADD COLUMN pure_alcohol REAL;")
