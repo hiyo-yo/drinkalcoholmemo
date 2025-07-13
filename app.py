@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, session
-from pyzbar.pyzbar import decode
 import sqlite3
 import os
 import requests
@@ -8,7 +7,6 @@ from datetime import datetime, timedelta
 from flask import jsonify
 from flask import url_for
 from urllib.parse import urlencode
-from PIL import Image
 from collections import defaultdict
 from itertools import zip_longest
 from dotenv import load_dotenv
@@ -243,129 +241,60 @@ def calendar():
     )
 
 
-@app.route('/scan', methods=['GET', 'POST'])
+@app.route('/scan', methods=['GET'])
 def scan():
-    barcode_data = None
+    jan_code = request.args.get("jan_code")
     item_info = None
 
+    if jan_code:
+        print(f"GETでjan_code={jan_code}を受信しました。")
+        conn = sqlite3.connect('drink_history.db')
+        c = conn.cursor()
+        c.execute('''
+            SELECT id, timestamp, product_name, volume, alcohol FROM drink_history
+            WHERE jan_code = ?
+            ORDER BY id DESC
+            LIMIT 1
+        ''', (jan_code,))
+        row = c.fetchone()
+        conn.close()
 
-    if request.method == "GET":
-        jan_code = request.args.get("jan_code")
-        if jan_code:
-            print(f"GETでjan_code={jan_code}を受信しました。")
-            conn = sqlite3.connect('drink_history.db')
-            c = conn.cursor()
-            c.execute('''
-                SELECT id, timestamp, product_name, volume, alcohol FROM drink_history
-                WHERE jan_code = ?
-                ORDER BY id DESC
-                LIMIT 1
-            ''', (jan_code,))
-            row = c.fetchone()
-            conn.close()
+        if row:
+            item_info = {
+                "id": row[0],
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "name": row[2],
+                "volume": row[3],
+                "alcohol": row[4],
+                "jan_code": jan_code
+            }
+            # APIから画像取得
+            api_info = search_item_by_jan(jan_code)
+            if api_info and api_info.get("image_url"):
+                item_info["image_url"] = api_info.get("image_url")
+            else:
+                item_info["image_url"] = None
 
-            if row:
-                # DB登録済みの場合は取り出し、
-                item_info = {
-                    "id": row[0],
-                    "timestamp": row[1],
-                    "name": row[2],
-                    "volume": row[3],
-                    "alcohol": row[4],
-                    "jan_code": jan_code
-                }
-                item_info["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                #画像取得
+        else:
+            try:
                 api_info = search_item_by_jan(jan_code)
-                if api_info and api_info.get("image_url"):
-                    item_info["image_url"] = api_info.get("image_url")
-                else:
-                    item_info["image_url"] = None
-                    
-            else:
-                # DBにない場合はAPI取得も可能
-                
-                try:
-                    api_info = search_item_by_jan(jan_code)
-                    print("APIより取得情報:", api_info)
-                    if api_info:
-                        item_info = {
-                            "name": api_info.get("name"),
-                            "volume": api_info.get("volume"),
-                            "alcohol": api_info.get("alcohol"),
-                            "image_url": api_info.get("image_url"),
-                            "jan_code": jan_code
-                        }
-                        item_info["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                except Exception as e:
-                    print("商品情報取得エラー：", e)
-                    item_info = {"name": "商品情報が取得できませんでした", "image_url": None}
-
-            return render_template('confirm_register.html', item=item_info)
-    
-    if request.method == "POST":
-        file = request.files['barcode_image']
-        if file:
-            img = Image.open(file.stream)
-            decoded_objects = decode(img)
-            if decoded_objects:
-                jan_code = decoded_objects[0].data.decode('utf-8')
-                print("スキャンしたJANコード", barcode_data)
-
-                # まずはDBから既存の商品情報があるか確認
-                conn = sqlite3.connect('drink_history.db')
-                c = conn.cursor()
-                c.execute('''
-                    SELECT id, timestamp, product_name, volume, alcohol FROM drink_history
-                    WHERE jan_code = ?
-                    ORDER BY id DESC
-                    LIMIT 1
-                ''', (jan_code,))
-                row = c.fetchone()
-                conn.close()
-
-                if row:
-                    # DB登録済みの場合は取り出し、
+                print("APIより取得情報:", api_info)
+                if api_info:
                     item_info = {
-                        "id": row[0],
-                        "timestamp": row[1],
-                        "name": row[2],
-                        "volume": row[3],
-                        "alcohol": row[4],
-                        "jan_code": jan_code
+                        "name": api_info.get("name"),
+                        "volume": api_info.get("volume"),
+                        "alcohol": api_info.get("alcohol"),
+                        "image_url": api_info.get("image_url"),
+                        "jan_code": jan_code,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     }
-                    print("DBより自動入力情報を取得しました:", item_info)
-                    #画像取得
-                    api_info = search_item_by_jan(jan_code)
-                    if api_info and api_info.get("image_url"):
-                        item_info["image_url"] = api_info.get("image_url")
-                    else:
-                        item_info["image_url"] = None
-
-                    return render_template('confirm_register.html', item=item_info)
-                
                 else:
-                    # DBに存在しなければAPIで取得
-                    try:
-                        api_info = search_item_by_jan(jan_code)
-                        print("APIより取得情報:", api_info)
-                        if api_info:
-                            item_info = {
-                                "name": api_info.get("name"),
-                                "volume": api_info.get("volume"),
-                                "alcohol": api_info.get("alcohol"),
-                                "image_url": api_info.get("image_url"),
-                                "jan_code": jan_code
-                            }
-                    except Exception as e:
-                        print("商品情報取得エラー：", e)
-                        item_info = {"name": "商品情報が取得できませんでした", "image_url": None}
-                    
-                return render_template('confirm_register.html', item=item_info)
+                    item_info = {"name": "商品情報が取得できませんでした", "image_url": None}
+            except Exception as e:
+                print("商品情報取得エラー：", e)
+                item_info = {"name": "商品情報が取得できませんでした", "image_url": None}
 
-            else:
-                barcode_data = "バーコードが読み取れませんでした。"
-                return render_template('scan.html', error=barcode_data)
+        return render_template('confirm_register.html', item=item_info)
 
     return render_template('scan.html')
 
