@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登録確認画面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-blue-400 via-teal-300 to-cyan-200 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
+        <h2 class="text-xl font-bold text-blue-800 text-center mb-4">このデータで登録しますか？</h2>
+
+        <table class="w-full text-left mb-4">
+            <tr><th class="pr-2">日時</th><td>{{ item.timestamp }}</td></tr>
+            <tr><th class="pr-2">品名</th><td>{{ item.name }}</td></tr>
+            <tr><th class="pr-2">容量</th><td>{{ item.volume }} ml</td></tr>
+            <tr><th class="pr-2">度数</th><td>{{ item.alcohol }} %</td></tr>
+            {% if item.image_url %}
+            <tr><th class="pr-2">商品画像</th><td><img src="{{ item.image_url }}" alt="商品画像" class="rounded shadow mt-1 max-w-xs"></td></tr>
+            {% endif %}
+        </table>
+
+        <form action="/confirm_register_action" method="post" class="flex flex-col space-y-2">
+            <input type="hidden" name="jan_code" value="{{ item.jan_code }}">
+            <input type="hidden" name="name" value="{{ item.name }}">
+            <input type="hidden" name="volume" value="{{ item.volume }}">
+            <input type="hidden" name="alcohol" value="{{ item.alcohol }}">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded shadow">このデータで登録</button>
+        </form>
+        <form action="/scan_camera" method="get" class="mt-2">
+            <button type="submit" class="bg-gray-400 hover:bg-gray-500 text-white py-2 rounded shadow w-full">キャンセル</button>
+        </form>
+    </div>
+</body>
+</html>

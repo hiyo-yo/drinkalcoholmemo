@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カメラスキャン</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-blue-400 via-teal-300 to-cyan-200 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2xl p-4 w-full max-w-sm flex flex-col items-center">
+        <h2 class="text-lg font-bold text-blue-800 mb-4">カメラでバーコードスキャンページ</h2>
+        <div id="reader" style="width: 100%; max-width: 300px;"></div>
+        <p id="result" class="mt-4 text-blue-700">読み取り待機中...</p>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            // スキャン成功時の処理
+            document.getElementById("result").innerText = "読み取り成功: " +decodedText;
+            console.log(`Scanned: ${decodedText}`);
+
+
+            // ここでサーバーにデータを送信するなどの処理を追加できます
+            // 読み取り後にPOSTして即処理へ遷移
+            fetch("scan_camera_action", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ jancode: decodedText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            });
+        }
+
+
+        const html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: 250
+            },
+            onScanSuccess
+        ).catch(err => {
+            console.error(err);
+            document.getElementById("result").innerText = "カメラ起動に失敗しました";
+        });
+    </script>
+</body>
+</html>

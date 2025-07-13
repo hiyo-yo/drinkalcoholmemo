@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飲酒カレンダー(日別表示)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-blue-400 via-teal-300 to-purple-200 min-h-screen flex flex-col items-center py-8 font-sans">
+    <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2x1 p-6 w-full max-w-2x1 mx-4">
+        <h1 class="text-6xl font-bold text-blue-900 text-center mb-4">{{ year }}年 {{ month }}月 飲酒カレンダー</h1>
+
+        <div class="flex justify-between items-center mb-4">
+            <a href="{{ url_for('calendar', year=prev_year, month=prev_month) }}" class="text-blue-700 hover:text-blue-900 text-lg">⬅️ 前月</a>
+            <a href="{{ url_for('calendar', year=next_year, month=next_month) }}" class="text-blue-700 hover:text-blue-900 text-lg">➡️ 次月</a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full border border-gray-300 rounded-lg">
+                <thead class="bg-gradient-to-t from-blue-200 to-cyan-200">
+                    <tr>
+                        <th class="p-2 border">日</th>
+                        <th class="p-2 border">月</th>
+                        <th class="p-2 border">火</th>
+                        <th class="p-2 border">水</th>
+                        <th class="p-2 border">木</th>
+                        <th class="p-2 border">金</th>
+                        <th class="p-2 border">土</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            {% for day, alcohol in row %}
+                                {% if day %}
+                                    {% if alcohol == 0 %}
+                                        {% set bg_color = 'bg-blue-50' %}
+                                    {% elif alcohol <= 20 %}
+                                        {% set bg_color = 'bg-green-100' %}
+                                    {% elif alcohol <= 40 %}
+                                        {% set bg_color = 'bg-yellow-100' %}
+                                    {% else %}
+                                        {% set bg_color = 'bg-red-100' %}
+                                    {% endif %}
+                                {% else %}    
+                                    {% set bg_color = 'bg-white' %}
+                                {% endif %}
+                                <td class="p-2 text-center border {{ bg_color }} min-h-[80px]">
+                                    {% if day %}
+                                        <div class="text-sm font-semibold text-blue-900">{{ day }}</div>
+                                        <div class="text-xs text-gray-700">{{ alcohol }}g</div>
+                                        <div class="text-xl">
+                                            {% if alcohol == 0 %}
+                                                ☺️
+                                            {% elif alcohol <= 20 %}
+                                                🙂
+                                            {% elif alcohol <= 40 %}
+                                                😔
+                                            {% else %}
+                                                💀
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        &nbsp;
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            {% if row|length < 7 %}
+                                {% for _ in range(7 - row|length) %}
+                                    <td class="p-2 border bg-white">&nbsp;</td>
+                                {% endfor %}
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 flex justify-center space-x-40">
+            <a href="/" class="bg-blue-400 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-xl shadow text-center">TOPへ戻る</a>
+            <a href="/scan" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">スキャンに戻る</a>
+            <a href="/graph" class="px-4 py-2 bg-cyan-400 hover:bg-blue-700 text-white rounded-lg shadow">グラフ表示</a>
+            <a href="/history" class="px-4 py-2 bg-purple-300 hover:bg-blue-700 text-white rounded-lg shadow">履歴一覧</a>
+        </div>
+    </div>
+</body>
+</html>

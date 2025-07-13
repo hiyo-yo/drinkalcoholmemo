@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飲酒管理アプリ - バーコード解析結果</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-blue-400 via-teal-300 to-cyan-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <h1 class="text-xl font-bold text-blue-800 text-center mb-4">バーコード解析結果</h1>
+
+    {% if barcode %}
+        <p class="mb-2"><strong>読み取ったJANコード：</strong> {{ barcode }}</p>
+    {% endif %}
+
+    {% if item %}
+        <h2 class="text-lg font-semibold text-blue-700 mt-4 mb-2">商品情報</h2>
+        <p>商品名： {{ item.name }}</p>
+        <p>容量： {{ item.volume }} ml</p>
+        {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="商品画像" class="mt-2 rounded shadow max-w-xs mx-auto">
+        {% endif %}
+    {% endif %}
+
+    <h2 class="text-lg font-semibold text-blue-700 mt-6 mb-2">飲酒情報の記録</h2>
+    <form action="/confirm_register_action" method="post" class="flex flex-col space-y-2">
+        <input type="hidden" name="jan_code" value="{{ barcode }}">
+        <input type="hidden" name="name" value="{{ item.name if item else '' }}">
+
+        <div class="flex flex-col mb-2">
+            <label>容量(ml):</label>
+            <input type="number" name="volume" value="{{ item.volume if item and item.volume else ''}}" placeholder="350" required class="border rounded px-3 py-2">
+        </div>
+
+        <div class="flex flex-col mb-2">
+        <label>アルコール度数(%)：</label>
+        <input type="number" step="0.1" name="alcohol" placeholder="5" required class="border rounded px-3 py-2">
+        </div>
+
+        <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded shadow">登録</button>
+    </form>
+
+    <div class="mt-4 flex flex-col items-center space-y-2">
+        <a href="/scan" class="bg-blue-400 hover:bg-blue-500 text-white py-2 rounded shadow px-20">別のバーコードを読み取る</a>
+        <a href="/history" class="bg-blue-400 hover:bg-blue-500 text-white py-2 rounded shadow px-20">記録履歴を見る</a>
+        <a href="/" class="bg-blue-400 hover:bg-blue-500 text-white py-2 rounded shadow px-20">戻る</a>
+    </div>
+</body>
+</html>

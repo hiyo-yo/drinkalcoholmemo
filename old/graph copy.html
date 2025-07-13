@@ -1,0 +1,74 @@
+<!--
+スマホ対応前の最終状態  2025/7/11
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飲酒量グラフ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>{{ year }}年{{ month }}月　飲酒量グラフ(月別表示)</h1>
+
+    <div>
+        <a href="/graph?mode=monthly&year={{ prev_year }}&month={{ prev_month }}">◀ 前月</a>
+        <select id="monthSelect" onchange="location = this.value;">
+            {% for m in range(1, 13) %}
+                <option value="/graph?mode=monthly&year={{ year }}&month={{ m }}" {% if month == m %}selected{% endif %}>
+                    {{ m }}月
+                </option>
+            {% endfor %}
+        </select>
+        <a href="/graph?mode=monthly&year={{ next_year }}&month={{ next_month }}">▶︎ 次月</a>
+    </div>
+   
+    <br>
+    <form method="get" action="/graph">
+        <label for="month">表示月を選択：</label>
+        <input type="month" id="month" name="month" value="{{ year }}-{{ '%02d'|format(month) }}">
+        <input type="hidden" name="mode" value="monthly">
+        <button type="submit">表示</button>
+    </form>
+     <canvas id="alcoholChart" width="400" height="300"></canvas>
+    <a href="/">トップへ戻る</a> |
+    <!-- <a href="/graph?mode=monthly">月別表示</a> -->
+    <script>
+        const ctx = document.getElementById('alcoholChart').getContext('2d');
+        const alcoholChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: JSON.parse('{{ labels | tojson | safe }}'),
+                datasets: [{
+                    label: '純アルコール摂取量 (g)',
+                    data: JSON.parse('{{ values | tojson | safe }}'),
+                    fill: false,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    tension: 0.3,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '純アルコール摂取量 (g)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '日付'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

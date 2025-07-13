@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飲酒管理アプリ - バーコードスキャン</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-blue-400 via-teal-300 to-cyan-200 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
+        <h1 class="text-xl font-bold text-blue-800 text-center mb-4">バーコード画像をアップロード</h1>
+    
+        <form method="post" enctype="multipart/form-data" class="flex flex-col space-y-4">
+            <input type="file" name="barcode_image" accept="image/*" required class="border rounded px-3 py-2">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded shadow">アップロードして解析</button>
+        </form>
+        
+        <div class="mt-4 flex flex-col items-center space-y-2">
+            <a href="/scan_camera" class="bg-blue-700 hover:bg-blue-800 text-white py-2 rounded shadow px-10">カメラスキャンへ</a>
+            <a href="/" class="bg-blue-400 hover:bg-blue-500 text-white py-2 rounded shadow px-20">戻る</a>
+        </div>
+    </div>
+</body>
+</html>

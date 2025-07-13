@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+add_columns.py
+APItest.py
+app_apitest.py
+# Virtual Environment
+venv/
+
+# VSCode settings (optional)
+.vscode/
+
+# OS files
+.DS_Store
+
+# SQLite DB (必要に応じて)
+*.db
+
+# Logs (必要に応じて)
+*.log
+
+# Env files (環境変数を使う場合)
+.env
