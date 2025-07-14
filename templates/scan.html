@@ -6,11 +6,13 @@
 <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2xl p-6 max-w-md w-full mx-auto">
     <h2 class="text-xl font-bold text-blue-800 mb-4 text-center">バーコードスキャン</h2>
     
-    <div id="reader" class="w-full"></div>
+    <div id="scanner-container" class="flex flex-col items-center space-y-4">
+        <video id="video" class="rounded-lg shadow w-full max-w-xs"></video>
+        <button id="start-scan" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded shadow">スキャン開始</button>
+    </div>
     
-    <form id="barcode-form" action="/scan" method="get" class="mt-4 hidden">
+    <form id="barcode-form" action="/scan" method="get" class="hidden">
         <input type="hidden" id="jan_code_input" name="jan_code">
-        <p class="text-center text-blue-800">バーコードを読み取りました。送信します...</p>
     </form>
 
     <div class="mt-4 text-center">
@@ -18,24 +20,31 @@
     </div>
 </div>
 
-<!-- html5-qrcode CDN -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- ZXing-js CDN -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <script>
-    function onScanSuccess(decodedText, decodedResult) {
-        console.log(`スキャン成功: ${decodedText}`);
-        document.getElementById("jan_code_input").value = decodedText;
-        document.getElementById("barcode-form").submit();
-    }
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.getElementById('video');
+    const startButton = document.getElementById('start-scan');
 
-    function onScanError(errorMessage) {
-        console.log(`スキャンエラー: ${errorMessage}`);
-    }
+    startButton.addEventListener('click', async () => {
+        startButton.disabled = true;
+        startButton.innerText = "スキャン中...";
+        try {
+            const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video');
+            console.log('スキャン成功:', result.text);
 
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", 
-        { fps: 10, qrbox: 250 },
-        /* verbose= */ false);
-    html5QrcodeScanner.render(onScanSuccess, onScanError);
+            document.getElementById('jan_code_input').value = result.text;
+            document.getElementById('barcode-form').submit();
+
+            codeReader.reset(); // 読み取り停止（多重読み取り防止）
+        } catch (err) {
+            console.error(err);
+            alert("カメラ起動に失敗しました。ブラウザ設定・カメラ許可を確認してください。");
+            startButton.disabled = false;
+            startButton.innerText = "スキャン開始";
+        }
+    });
 </script>
 {% endblock %}
