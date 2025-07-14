@@ -24,7 +24,8 @@ def init_db():
             product_name TEXT,
             volume INTEGER,
             alcohol REAL,
-            alcohol_grams REAL
+            alcohol_grams REAL,
+            pure_alcohol REAL
         )
     ''')
     conn.commit()
@@ -32,23 +33,6 @@ def init_db():
 
 init_db()
 
-def migrate_db():
-    conn = sqlite3.connect('drink_history.db')
-    c = conn.cursor()
-    try:
-        c.execute("ALTER TABLE drink_history ADD COLUMN pure_alcohol REAL;")
-        conn.commit()
-        print("✅ pure_alcohol column added to drink_history.db")
-    except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e) or "already exists " in str(e):
-            print("✅ pure_alcohol column already exists, skipping migration.")
-        else:
-            print(f"⚠️ Migration error: {e}")
-    finally:
-        conn.close()
-
-# 必ずアプリ定義前に実行
-migrate_db()
 
 app = Flask(__name__)
 app.secret_key = "hisajo34tnjngkrejk34"
