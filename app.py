@@ -150,7 +150,7 @@ def graph():
     
 
     for timestamp_str, pure_alcohol in rows:
-        if not timestamp_str:
+        if not timestamp_str or pure_alcohol is None:
             continue
         dt = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
         if dt.year == year and dt.month == month:
@@ -208,7 +208,7 @@ def calendar():
     # 日付: 合計純アルコール量 を作成
     day_to_alcohol = defaultdict(float)
     for timestamp_str, pure_alcohol in rows:
-        if not timestamp_str or not pure_alcohol:
+        if not timestamp_str or pure_alcohol is None:
             continue
         dt = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
         if first_day_of_month <= dt <= last_day_of_month:
@@ -280,6 +280,8 @@ def scan():
             else:
                 item_info["image_url"] = None
 
+            return render_template('confirm_register.html', item=item_info)
+
         else:
             try:
                 api_info = search_item_by_jan(jan_code)
@@ -298,8 +300,7 @@ def scan():
             except Exception as e:
                 print("商品情報取得エラー：", e)
                 item_info = {"name": "商品情報が取得できませんでした", "image_url": None}
-
-        return render_template('confirm_register.html', item=item_info)
+            return render_template('scan_result.html', item=item_info)
 
     return render_template('scan.html')
 
@@ -396,12 +397,14 @@ def confirm_register_action():
     alcohol = request.form.get('alcohol')
 
     # 純アルコール計算
-    pure_alcohol = None
-    if volume and alcohol:
-        try:
-            pure_alcohol = (float(volume) * float(alcohol) / 100) * 0.8
-        except Exception as e:
-            print("純アルコール計算エラー", e)
+    pure_alcohol = 0.0
+    try:
+        vol = float(volume) if volume else 0
+        alc = float(alcohol) if alcohol else 0
+        pure_alcohol = (vol * alc / 100) * 0.8
+    except Exception as e:
+        print("純アルコール計算エラー", e)
+        pure_alcohol = 0.0
 
     conn = sqlite3.connect('drink_history.db')
     c = conn.cursor()
@@ -438,7 +441,12 @@ def edit_item(item_id):
         name = request.form['name']
         volume = request.form['volume']
         alcohol = request.form['alcohol']
-        c.execute("UPDATE drink_history SET product_name=?, volume=?, alcohol=? WHERE id=?", (name, volume, alcohol, item_id))
+
+        vol = float(volume) if volume else 0
+        alc = float(alcohol) if alcohol else 0
+        pure_alcohol = (vol * alc / 100) * 0.8
+
+        c.execute("UPDATE drink_history SET product_name=?, volume=?, alcohol=?, pure_alcohol=? WHERE id=?", (name, volume, alcohol, pure_alcohol, item_id))
         conn.commit()
         conn.close()
         return redirect('/history')
@@ -466,7 +474,7 @@ def update_alcohol():
     c = conn.cursor()
     #更新対象の最新idを取得
     c.execute('''
-        SELECT id FROM drink_history
+        SELECT id, volume FROM drink_history
         WHERE jan_code = ?
         ORDER BY id DESC
         LIMIT 1
@@ -474,11 +482,16 @@ def update_alcohol():
     row = c.fetchone()
 
     if row:
+        item_id = row[0]
+        volume = float(row[1]) if row[1] else 0
+        alcohol_value = float(alcohol) if alcohol else 0
+        pure_alcohol = (volume * alcohol_value / 100) * 0.8
+
         c.execute('''
             UPDATE drink_history
-            SET alcohol = ?
+            SET alcohol = ?, pure_alcohol = ?
             WHERE id = ?
-        ''', (alcohol, row[0]))
+        ''', (alcohol_value, pure_alcohol, item_id))
     conn.commit()
     conn.close()
     return redirect('/history')

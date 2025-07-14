@@ -24,7 +24,7 @@
 
     <h2 class="text-lg font-semibold text-blue-700 mt-6 mb-2">飲酒情報の記録</h2>
     <form action="/confirm_register_action" method="post" class="flex flex-col space-y-2">
-        <input type="hidden" name="jan_code" value="{{ barcode }}">
+        <input type="hidden" name="jan_code" value="{{ item.jan_code }}">
         <input type="hidden" name="name" value="{{ item.name if item else '' }}">
 
         <div class="flex flex-col mb-2">
