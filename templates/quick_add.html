@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}クイック飲酒記録 | 飲酒管理アプリ{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-start p-4" style="background: linear-gradient(to bottom, #89f7fe, #66a6ff);">
+    <div class="bg-white bg-opacity-80 backdrop-blur-md shadow-lg rounded-2xl p-4 w-full max-w-2xl min-h-[660px]  mx-auto flex flex-col items-center relative">
+        <h1 class="text-2xl font-bold text-center mb-4 text-blue-600">クイック飲酒記録</h1>
+
+        <div id="categoryTabs" class="flex overflow-x-auto space-x-2 mb-4 px-2">
+
+        </div>
+
+        <div id="drink-list" class="space-y-2 w-full max-w-md max-h overflow-y-auto"></div>
+
+        <button id="saveButton" class="fixed bottom-20 mt-6 bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600 transition z-50">
+            保存
+        </button>
+        <a href="/" class="fixed bottom-6 mt-6 bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600 transition z-50">
+            topに戻る
+        </a>
+    </div>
+
+    <div class="hidden bg-blue-500 text-white bg-gray-300"></div>
+</div>
+
+<script>
+const DRINK_TEMPLATES = {
+    beer: [
+        { name: '中ジョッキ (度数 5%)', volume: 400, alcohol: 5},
+        { name: 'グラス (度数 5%)', volume: 180, alcohol: 5},
+        { name: '中びん (度数 5%)', volume: 500, alcohol: 5},
+        { name: '大びん (度数 5%)', volume: 633, alcohol: 5},
+        { name: '350ml缶 (度数 5%)', volume: 350, alcohol: 5},
+        { name: '350ml缶 (度数 4%)', volume: 350, alcohol: 4},
+        { name: '500ml缶 (度数 5%)', volume: 500, alcohol: 5},
+        { name: '500ml缶 (度数 4%)', volume: 500, alcohol: 4}
+    ],
+    highball: [
+        { name: '中ジョッキ (度数 7%)', volume: 400, alcohol: 7},
+        { name: 'メガジョッキ (度数 7%)', volume: 800, alcohol: 7},
+        { name: '350ml缶 (度数 7%)', volume: 350, alcohol: 5},
+        { name: '350ml缶 (度数 9%)', volume: 350, alcohol: 4},
+        { name: '500ml缶 (度数 7%)', volume: 500, alcohol: 5},
+        { name: '500ml缶 (度数 9%)', volume: 500, alcohol: 4}
+    ],
+    chuhai: [
+        { name: '中ジョッキ (度数 7%)', volume: 400, alcohol: 7},
+        { name: 'メガジョッキ (度数 7%)', volume: 800, alcohol: 7},
+        { name: '350ml缶 (度数 7%)', volume: 350, alcohol: 5},
+        { name: '350ml缶 (度数 9%)', volume: 350, alcohol: 4},
+        { name: '500ml缶 (度数 7%)', volume: 500, alcohol: 5},
+        { name: '500ml缶 (度数 9%)', volume: 500, alcohol: 4}
+    ],
+    whisky: [
+        { name: 'ロック 30ml (度数 40%)', volume: 30, alcohol: 40},
+        { name: '水割り 180ml (度数 7%)', volume: 180, alcohol: 7},
+        { name: 'シングル 30ml (度数 40%)', volume: 30, alcohol: 40}
+    ],
+    japanese_sake: [
+        { name: '1合 180ml (度数 15%)', volume: 180, alcohol: 15},
+        { name: 'おちょこ1杯 30ml (度数 15%)', volume: 30, alcohol: 15}
+    ],
+    syochu: [
+        { name: 'ロック 80ml (度数 25%)', volume: 80, alcohol: 25},
+        { name: 'お湯割り 160ml (度数 13%)', volume: 160, alcohol: 13},
+        { name: '水割り 160ml  (度数 13%)', volume: 160, alcohol: 13},
+        { name: '1合 100ml (度数 25%)', volume: 100, alcohol: 25}
+    ],
+    wine: [
+        { name: '1杯 120ml (度数 12%)', volume: 120, alcohol: 12},
+        { name: '1本 750ml (度数 12%)', volume: 750, alcohol: 12}
+    ]
+};
+
+const CATEGORY_LABELS = {
+    beer: 'ビール',
+    highball: 'ハイボール',
+    chuhai: 'チューハイ',
+    whisky: 'ウィスキー',
+    japanese_sake: '日本酒',
+    syochu: '焼酎',
+    wine: 'ワイン'
+}
+
+let selectedCategory = 'beer';
+const drinkListDiv = document.getElementById('drink-list');
+const categoryTabs = document.getElementById('categoryTabs');
+
+function calcPureAlcohol(volume, alcoholPercent) { return (volume * alcoholPercent * 0.8) / 100; }
+
+function renderDrinkList() {
+    drinkListDiv.innerHTML = '';
+    DRINK_TEMPLATES[selectedCategory].forEach((drink, idx) => {
+        const pureAlcohol = calcPureAlcohol(drink.volume, drink.alcohol).toFixed(1);
+        const drinkRow = document.createElement('div');
+        drinkRow.className = 'flex items-center justify-between bg-white rounded shadow px-2 py-1 w-full max-w-md';
+        drinkRow.innerHTML = `
+            <div>
+                <div class="font-semibold text-sm">${drink.name}</div>
+                <div class="text-xs text-gray-600">純アルコール量: ${pureAlcohol}g</div>
+            </div>
+            <div class="flex items-center space-x-1">
+                <button class="decrease bg-gray-300 px-2 rounded text-sm" data-idx="${idx}">-</button>
+                <span id="count-${idx}" class="w-6 text-center text-sm">0</span>
+                <button class="increase bg-blue-400 text-white px-2 rounded text-sm" data-idx="${idx}">+</button>
+            </div>`;
+        drinkListDiv.appendChild(drinkRow);
+    });
+}
+
+Object.entries(CATEGORY_LABELS).forEach(([key, label]) => {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.className = 'category-btn px-3 py-1 rounded text-sm bg-gray-200';
+  btn.dataset.category = key;
+  if (key === selectedCategory) {
+    btn.className = 'category-btn px-3 py-1 rounded text-sm bg-blue-500 text-white font-semibold';
+    } else {
+        btn.className = 'category-btn px-3 py-1 rounded text-sm bg-gray-200';
+    }
+
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-btn').forEach(b => {
+            b.className = 'category-btn px-3 py-1 rounded text-sm bg-gray-200';
+        });
+        btn.className = 'category-btn px-3 py-1 rounded text-sm bg-blue-500 text-white font-semibold';
+        selectedCategory = key;
+        renderDrinkList();
+    });
+    categoryTabs.appendChild(btn);
+});
+
+drinkListDiv.addEventListener('click', e => {
+    if (e.target.classList.contains('increase') || e.target.classList.contains('decrease')) {
+        const idx = e.target.getAttribute('data-idx');
+        const countSpan = document.getElementById(`count-${idx}`);
+        let currentCount = parseInt(countSpan.textContent);
+        if (e.target.classList.contains('increase')) currentCount++;
+        else if (e.target.classList.contains('decrease') && currentCount > 0) currentCount--;
+        countSpan.textContent = currentCount;
+    }
+});
+
+document.getElementById('saveButton').addEventListener('click', () => {
+    const dataToSend = DRINK_TEMPLATES[selectedCategory].map((drink, idx) => {
+        const count = parseInt(document.getElementById(`count-${idx}`).textContent);
+        return { ...drink, count };
+    }).filter(item => item.count > 0);
+
+    if (dataToSend.length === 0) { alert('記録する飲み物を選択して下さい。'); return; }
+    fetch('/quick_add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: new Date().toISOString().slice(0,10), drinks: dataToSend })
+    })
+    .then(res => res.json())
+    .then(data => { alert('記録が保存されました。'); window.location.href = '/history'; })
+    .catch(err => { console.error(err); alert('保存に失敗しました。'); });
+});
+
+renderDrinkList();
+</script>
+{% endblock %}

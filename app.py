@@ -97,26 +97,39 @@ def index():
     return render_template('index.html')
 
 
-#記録追加画面 テンプレ登録時に流用の可能性あり
-# @app.route('/add', methods=['GET', 'POST'])
-# def add():
-#     if request.method == 'POST':
-#         # フォームデータ取得してDB登録
-#         date = request.form['date']
-#         name = request.form['name']
-#         volume = request.form['volume']
-#         alcohol = request.form['alcohol']
-#         memo = request.form['memo']
+#飲み会用記録追加画面 
+@app.route('/quick_add', methods=['GET', 'POST'])
+def quick_add():
+    if request.method == 'POST':
+        data = request.get_json()
+        drinks = data.get('drinks', [])
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-#         conn = get_db_connection()
-#         conn.execute(
-#             'INSERT INTO drinks (date, name, volume, alcohol, memo) VALUES (?, ?, ?, ?, ?)',
-#             (date, name, volume, alcohol, memo)
-#         )
-#         conn.commit()
-#         conn.close()
-#         return redirect('/')
-#     return render_template('add.html')
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        for drink in drinks:
+            name = drink['name']
+            volume = float(drink['volume'])
+            alcohol = float(drink['alcohol'])
+            count = drink['count']
+
+            pure_alcohol = (volume * alcohol / 100) * 0.8
+
+            for _ in range(count):
+                cursor.execute(
+                    '''
+                    INSERT INTO drink_history (timestamp, jan_code, product_name, volume, alcohol, pure_alcohol)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ''',
+                    (timestamp, None, name, volume, alcohol, pure_alcohol)
+                )
+        conn.commit()
+        conn.close()
+
+        return jsonify({'status': 'success'})
+    
+    return render_template('quick_add.html')
 
 @app.route('/graph')
 def graph():
