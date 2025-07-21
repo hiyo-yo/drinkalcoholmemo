@@ -185,27 +185,6 @@ def calendar():
     rows = c.fetchall()
     conn.close()
 
-    # calendar_data = []
-    # current_day = first_day
-    # while current_day <= last_day:
-    #     date_str = current_day.strftime("%Y-%m-%d")
-    #     alcohol_amount = round(data[date_str], 1) if date_str in data else 0
-
-    #     if alcohol_amount == 0:
-    #         icon = '☺️'
-    #     elif alcohol_amount <= 20:
-    #         icon = '🙂'                   
-    #     elif alcohol_amount <= 40:
-    #         icon = '😔'
-    #     else:
-    #         icon = '💀'
-
-    #     calendar_data.append({
-    #         'date': date_str,
-    #         'alcohol': alcohol_amount,
-    #         'icon': icon
-    #     })
-
     # 月初と月末を取り出す
     today = datetime.today()
     target_year = request.args.get('year', type=int)
@@ -439,12 +418,26 @@ def confirm_register_action():
 
 @app.route('/history')
 def history():
+    page = request.args.get('page', default=1, type=int)
+    per_page = 10
+    offset = (page - 1) * per_page
+
     conn = sqlite3.connect('drink_history.db')
     c = conn.cursor()
-    c.execute('SELECT id, timestamp, jan_code, product_name, volume, alcohol FROM drink_history ORDER BY timestamp DESC')
+    c.execute('''
+              SELECT id, timestamp, jan_code, product_name, volume, alcohol
+              FROM drink_history
+              ORDER BY timestamp DESC
+              LIMIT ? OFFSET ?
+    ''', (per_page, offset))
     history = c.fetchall()
+
+    c.execute('SELECT COUNT(*) FROM drink_history')
+    total_count = c.fetchone()[0]
+    total_pages = (total_count + per_page - 1) // per_page
+
     conn.close()
-    return render_template('history.html', history=history)
+    return render_template('history.html', history=history, page=page, total_pages=total_pages)
 
 @app.route('/edit/<int:item_id>', methods=['GET', 'POST'])
 def edit_item(item_id):

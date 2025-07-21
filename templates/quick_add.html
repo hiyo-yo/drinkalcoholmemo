@@ -90,23 +90,28 @@ const categoryTabs = document.getElementById('categoryTabs');
 function calcPureAlcohol(volume, alcoholPercent) { return (volume * alcoholPercent * 0.8) / 100; }
 
 function renderDrinkList() {
-    drinkListDiv.innerHTML = '';
-    DRINK_TEMPLATES[selectedCategory].forEach((drink, idx) => {
-        const pureAlcohol = calcPureAlcohol(drink.volume, drink.alcohol).toFixed(1);
-        const drinkRow = document.createElement('div');
-        drinkRow.className = 'flex items-center justify-between bg-white rounded shadow px-2 py-1 w-full max-w-md';
-        drinkRow.innerHTML = `
-            <div>
-                <div class="font-semibold text-sm">${drink.name}</div>
-                <div class="text-xs text-gray-600">純アルコール量: ${pureAlcohol}g</div>
-            </div>
-            <div class="flex items-center space-x-1">
-                <button class="decrease bg-gray-300 px-2 rounded text-sm" data-idx="${idx}">-</button>
-                <span id="count-${idx}" class="w-6 text-center text-sm">0</span>
-                <button class="increase bg-blue-400 text-white px-2 rounded text-sm" data-idx="${idx}">+</button>
-            </div>`;
-        drinkListDiv.appendChild(drinkRow);
-    });
+    drinkListDiv.classList.add('animate__animated' , 'animate__fadeOut');
+    setTimeout(() => {
+        drinkListDiv.innerHTML = '';
+        DRINK_TEMPLATES[selectedCategory].forEach((drink, idx) => {
+            const pureAlcohol = calcPureAlcohol(drink.volume, drink.alcohol).toFixed(1);
+            const drinkRow = document.createElement('div');
+            drinkRow.className = 'flex items-center justify-between bg-white rounded shadow px-2 py-1 w-full max-w-md';
+            drinkRow.innerHTML = `
+                <div>
+                    <div class="font-semibold text-sm">${drink.name}</div>
+                    <div class="text-xs text-gray-600">純アルコール量: ${pureAlcohol}g</div>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <button class="decrease bg-gray-300 px-2 rounded text-sm" data-idx="${idx}">-</button>
+                    <span id="count-${idx}" class="w-6 text-center text-sm">0</span>
+                    <button class="increase bg-blue-400 text-white px-2 rounded text-sm" data-idx="${idx}">+</button>
+                </div>`;
+            drinkListDiv.appendChild(drinkRow);
+        });
+        drinkListDiv.classList.remove('animate__fadeOut');
+        drinkListDiv.classList.add('animate__fadeIn');
+    }, 200);
 }
 
 Object.entries(CATEGORY_LABELS).forEach(([key, label]) => {
